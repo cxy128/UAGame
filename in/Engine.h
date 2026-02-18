@@ -1,0 +1,40 @@
+#pragma once
+
+#include <Windows.h>
+#include <string>
+#include "UnrealContainers.h"
+#include "ObjectArray.h"
+#include "util.h"
+
+namespace Engine {
+
+	inline HWND Hwnd = nullptr;
+	inline uint64 ImageBase = 0;
+
+	inline float Width = 0;
+	inline float Height = 0;
+	inline FVector2D ScreenCenter;
+
+	inline UEEngine UAGameEngine;
+	inline UEGameViewportClient SGGameViewportClient;
+	inline UEGameplayStatics Default__GameplayStatics;
+	inline ASGCharacter SGCharacter;
+	inline UESGActorStatics Default__SGActorStatics;
+	inline UESGCharacterStatics Default__SGCharacterStatics;
+
+	inline UECanvas Canvas;
+
+	bool Init();
+
+	bool FindFunction();
+
+	bool FindObject();
+
+	bool FindFont();
+
+	void K2_StrokeLine(FVector2D& P1, FVector2D& P2, FLinearColor& Color, float LineThickness = 1.0f);
+
+	void K2_StrokeText(const FString& RenderText, FLinearColor& Color, FVector2D& Pos, float ScaleValue = 1.0f, bool bCenter = false, bool bOutline = true);
+
+	void K2_DrawBox(const FVector2D& ScreenPosition, const FVector2D& ScreenSize, const FLinearColor& RenderColor, float Thickness = 0.0f);
+}
