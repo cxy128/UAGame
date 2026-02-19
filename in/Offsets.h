@@ -5,11 +5,11 @@
 
 namespace Offset {
 
-	inline uint32 GWorld = 0;
+	inline uint32 GWorld;
 
-	inline uint32 ProcessEvent = 0x00C6A9F0;
+	inline uint32 ProcessEvent;
 
-	inline uint32 ProcessEventIdx = 0x00000046;
+	inline uint32 ProcessEventIndex;
 
 	namespace UEngine {
 
@@ -120,17 +120,17 @@ namespace Offset {
 
 	namespace FName {
 
-		inline uint32 AppendString = 0x00;
+		inline uint32 AppendString;
 
-		inline uint32 ComparisonIndex = 0;
-		inline uint32 Number = 0;
+		inline uint32 ComparisonIndex;
+		inline uint32 Number;
 
-		inline uint32 SizeOf = 0;
+		inline uint32 SizeOf;
 	}
 
 	namespace FChunkedFixedUObjectArray {
 
-		inline uint32 NumElementsPerChunk = 0x10000;
+		inline uint32 NumElementsPerChunk;
 
 		inline uint32 Objects = 0x00;
 		inline uint32 MaxElements = 0x10;
@@ -141,9 +141,8 @@ namespace Offset {
 
 	namespace FUObjectItem {
 
-		inline uint32 Object = 0x0;
-
-		inline uint32 SizeOf = 0x18;
+		inline uint32 Object;
+		inline uint32 SizeOf;
 	}
 
 	namespace UObject {
@@ -160,21 +159,42 @@ namespace Offset {
 
 		inline uint32 SuperStruct;
 		inline uint32 Children;
-		inline uint32 ChildProperties;
 		inline uint32 Size;
 		inline uint32 MinAlignment;
+
+		inline uint32 ChildProperties;
 	}
 
 	namespace UClass {
 
 		inline uint32 CastFlags;
+
 		inline uint32 ClassDefaultObject;
 	}
 
 	namespace UFunction {
 
-		inline uint32 FunctionFlags = 0x00B0;
-		inline uint32 ExecFunction = 0x00D8;
+		inline uint32 FunctionFlags;
+		inline uint32 ExecFunction;
+	}
+
+	namespace FField {
+
+		inline uint32 Vft = 0x00;
+		inline uint32 Owner = 0x10;
+
+		inline uint32 Next;
+		inline uint32 Class;
+		inline uint32 Name;
+		inline uint32 Flags;
+	}
+
+	namespace FProperty {
+
+		inline uint32 ArrayDim;
+		inline uint32 ElementSize;
+		inline uint32 PropertyFlags;
+		inline uint32 Offset;
 	}
 
 	namespace Setting {
@@ -222,7 +242,10 @@ namespace Offset {
 		return bFoundOffset ? HighestFoundOffset : NotFound;
 	}
 
-	template<bool CheckForVft = true> inline int32 GetValidPointer(const uint8* ObjA, const uint8* ObjB, int32 StartingOffset, int32 MaxOffset) {
+	template<bool CheckForVft = true> inline int32 GetValidPointer(const void* PtrObjA, const void* PtrObjB, int32 StartingOffset, int32 MaxOffset, bool bNeedsToBeInProcessMemory = false) {
+
+		const uint8_t* ObjA = static_cast<const uint8_t*>(PtrObjA);
+		const uint8_t* ObjB = static_cast<const uint8_t*>(PtrObjB);
 
 		if (!IsUserAddressValid(ObjA) || !IsUserAddressValid(ObjB)) {
 
@@ -234,6 +257,14 @@ namespace Offset {
 			const bool bIsAValid = IsUserAddressValid(*reinterpret_cast<void* const*>(ObjA + j)) && (CheckForVft ? IsUserAddressValid(**reinterpret_cast<void** const*>(ObjA + j)) : true);
 
 			const bool bIsBValid = IsUserAddressValid(*reinterpret_cast<void* const*>(ObjB + j)) && (CheckForVft ? IsUserAddressValid(**reinterpret_cast<void** const*>(ObjB + j)) : true);
+
+			if (bNeedsToBeInProcessMemory) {
+
+				if (!IsInProcessRange(*reinterpret_cast<const uint64*>(ObjA + j)) || !IsInProcessRange(*reinterpret_cast<const uint64*>(ObjB + j))) {
+
+					continue;
+				}
+			}
 
 			if (bIsAValid && bIsBValid) {
 

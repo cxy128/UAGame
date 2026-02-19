@@ -25,46 +25,50 @@ namespace UAGame {
 
 	bool ExchangePointer() {
 
-		auto [ImageBase, ImageSize] = GetImageBaseAndSize();
+		//auto [ImageBase, ImageSize] = GetImageBaseAndSize();
 
-		auto JmpAddress = reinterpret_cast<uint8*>(FindPatternInRange("CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC", ImageBase, ImageSize));
-		if (!JmpAddress) {
-			return false;
-		}
+		//auto JmpAddress = reinterpret_cast<uint8*>(FindPatternInRange("CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC", ImageBase, ImageSize));
+		//if (!JmpAddress) {
+		//	return false;
+		//}
 
-		auto JmpPageProtect = 0ul;
-		if (!VirtualProtect(JmpAddress, PAGE_SIZE, PAGE_EXECUTE_READWRITE, &JmpPageProtect)) {
-			return false;
-		}
+		//auto JmpPageProtect = 0ul;
+		//if (!VirtualProtect(JmpAddress, PAGE_SIZE, PAGE_EXECUTE_READWRITE, &JmpPageProtect)) {
+		//	return false;
+		//}
 
-		JmpAddress[0] = 0x89;
-		JmpAddress[1] = 0xC0;
-		JmpAddress[2] = 0x89;
-		JmpAddress[3] = 0xC0;
-		JmpAddress[4] = 0xFF;
-		JmpAddress[5] = 0x25;
-		JmpAddress[6] = 0x00;
-		JmpAddress[7] = 0x00;
-		JmpAddress[8] = 0x00;
-		JmpAddress[9] = 0x00;
-		*reinterpret_cast<void**>(JmpAddress + 10) = fPostRender;
+		//JmpAddress[0] = 0x89;
+		//JmpAddress[1] = 0xC0;
+		//JmpAddress[2] = 0x89;
+		//JmpAddress[3] = 0xC0;
+		//JmpAddress[4] = 0xFF;
+		//JmpAddress[5] = 0x25;
+		//JmpAddress[6] = 0x00;
+		//JmpAddress[7] = 0x00;
+		//JmpAddress[8] = 0x00;
+		//JmpAddress[9] = 0x00;
+		//*reinterpret_cast<void**>(JmpAddress + 10) = fPostRender;
 
-		if (!VirtualProtect(JmpAddress, PAGE_SIZE, JmpPageProtect, &JmpPageProtect)) {
-			return false;
-		}
+		//if (!VirtualProtect(JmpAddress, PAGE_SIZE, JmpPageProtect, &JmpPageProtect)) {
+		//	return false;
+		//}
 
 		struct _T {
 
 			PVOID* vft;
 		};
 
-		auto _t = reinterpret_cast<_T*>(Engine::SGGameViewportClient.GetAddress());
+		//auto _t = reinterpret_cast<_T*>(Engine::SGGameViewportClient.GetAddress());
+
+		auto _t = reinterpret_cast<_T*>(UAGameEngine.GetGameViewport().GetValue());
 
 		ULONG AccessProtection = 0;
 
 		if (VirtualProtect(_t->vft, PAGE_SIZE, PAGE_READWRITE, &AccessProtection)) {
 
-			PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[114], JmpAddress));
+			PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[113], fPostRender));
+
+			//PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[113], JmpAddress));
 
 			//Draw = reinterpret_cast<void (*)(void* GameViewport, void* InViewport, void* SceneCanvas)>(_InterlockedExchangePointer(&_t->vft[], fDraw));
 
@@ -87,9 +91,12 @@ namespace UAGame {
 
 	void fPostRender(void* GameViewport, void* Canvas) {
 
-		Engine::Canvas = UECanvas(Canvas);
+		if (Canvas) {
 
-		Render();
+			Engine::Canvas = UECanvas(Canvas);
+
+			Render();
+		}
 
 		PostRender(GameViewport, Canvas);
 	}

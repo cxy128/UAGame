@@ -3,6 +3,10 @@
 
 namespace Engine {
 
+	void FindOffset() {
+
+	}
+
 	bool FindFunction() {
 
 		UECanvas::K2_DrawBox_Function = ObjectArray::FindObjectFast("K2_DrawBox").GetAddress();
@@ -108,7 +112,43 @@ namespace Engine {
 			return false;
 		}
 
-		Print("--> UAGame.exe FindFunction USGCharacterStatics %p \n", UESGCharacterStatics::GetActorCharacterType_Function);
+		UESGCharacterStatics::GetPlayerName_Function = ObjectArray::FindObjectFastInOuter("GetPlayerName", "SGCharacterStatics").GetAddress();
+		if (!UESGCharacterStatics::GetPlayerName_Function) {
+			return false;
+		}
+
+		UESGCharacterStatics::GetPlayerState_Function = ObjectArray::FindObjectFastInOuter("GetPlayerState", "SGCharacterStatics").GetAddress();
+		if (!UESGCharacterStatics::GetPlayerState_Function) {
+			return false;
+		}
+
+		UESGCharacterStatics::GetTeamIndex_Function = ObjectArray::FindObjectFastInOuter("GetTeamIndex", "SGCharacterStatics").GetAddress();
+		if (!UESGCharacterStatics::GetTeamIndex_Function) {
+			return false;
+		}
+
+		Print("--> UAGame.exe FindFunction USGCharacterStatics %p %p \n", UESGCharacterStatics::GetActorCharacterType_Function, UESGCharacterStatics::GetPlayerName_Function);
+
+		Print("--> UAGame.exe FindFunction USGCharacterStatics %p %p \n", UESGCharacterStatics::GetPlayerState_Function, UESGCharacterStatics::GetTeamIndex_Function);
+
+		APlayerState::GetPlayerName_Function = ObjectArray::FindObjectFastInOuter("GetPlayerName", "PlayerState").GetAddress();
+		if (!APlayerState::GetPlayerName_Function) {
+			return false;
+		}
+
+		Print("--> UAGame.exe FindFunction APlayerState %p \n", APlayerState::GetPlayerName_Function);
+
+		UESGTeamStatics::GetTeamIndex_Function = ObjectArray::FindObjectFastInOuter("GetTeamIndex", "SGTeamStatics").GetAddress();
+		if (!UESGTeamStatics::GetTeamIndex_Function) {
+			return false;
+		}
+
+		UESGTeamStatics::IsTeammate_Function = ObjectArray::FindObjectFastInOuter("IsTeammate", "SGTeamStatics").GetAddress();
+		if (!UESGTeamStatics::IsTeammate_Function) {
+			return false;
+		}
+
+		Print("--> UAGame.exe FindFunction USGTeamStatics %p %p \n", UESGTeamStatics::GetTeamIndex_Function, UESGTeamStatics::IsTeammate_Function);
 
 		return true;
 	}
@@ -145,9 +185,16 @@ namespace Engine {
 			return false;
 		}
 
+		Default__SGTeamStatics = ObjectArray::FindObjectFast<UESGTeamStatics>("Default__SGTeamStatics");
+		if (!Default__SGTeamStatics.GetAddress()) {
+			return false;
+		}
+
 		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", UAGameEngine.GetValue(), SGGameViewportClient.GetValue(), SGCharacter.GetValue());
 
 		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", Default__GameplayStatics.GetValue(), Default__SGActorStatics.GetValue(), Default__SGCharacterStatics.GetValue());
+
+		Print("--> UAGame.exe FindObject 0x%llX \n", Default__SGTeamStatics.GetValue());
 
 		return true;
 	}
@@ -179,21 +226,25 @@ namespace Engine {
 		ScreenCenter.X = Width * 0.5f;
 		ScreenCenter.Y = Height * 0.5f;
 
+		FindOffset();
+
 		FindObject();
 
 		FindFunction();
 
 		FindFont();
 
+		FindOffset();
+
 		return true;
 	}
 
-	void K2_StrokeLine(FVector2D& P1, FVector2D& P2, FLinearColor& Color, float LineThickness) {
+	void K2_StrokeLine(const FVector2D& P1, const FVector2D& P2, const FLinearColor& Color, float LineThickness) {
 
 		Canvas.K2_DrawLine(P1, P2, LineThickness, Color);
 	}
 
-	void K2_StrokeText(const FString& RenderText, FLinearColor& Color, FVector2D& Pos, float ScaleValue, bool bCenter, bool bOutline) {
+	void K2_StrokeText(const FString& RenderText, const FLinearColor& Color, const FVector2D& Pos, float ScaleValue, bool bCenter, bool bOutline) {
 
 		FVector2D Scale(ScaleValue, ScaleValue);
 		FVector2D ShadowOffset(1.0f, 1.0f);

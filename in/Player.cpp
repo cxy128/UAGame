@@ -197,26 +197,152 @@ namespace Player {
 
 		FVector2D TextPos = SocketScreen[HeadIndex];
 		TextPos.X -= 15.f;
-		TextPos.Y -= 10.f;
-
-		TextPos.Y -= std::clamp(300.f / Distance, 10.f, 25.f);
+		TextPos.Y -= 30.f;
 
 		FLinearColor Color;
 
-		if (Distance < 50.f) {
+		if (Distance < 50.0f) {
 
-			Color = FLinearColor(1.f, 0.2f, 0.2f, 1.f);
+			Color = FLinearColor(1.0f, 0.2f, 0.2f, 1.0f);
 
-		} else if (Distance < 150.f) {
+		} else if (Distance < 150.0f) {
 
-			Color = FLinearColor(1.f, 0.9f, 0.2f, 1.f);
+			Color = FLinearColor(1.0f, 0.9f, 0.2f, 1.0f);
 
 		} else {
 
-			Color = FLinearColor(1.f, 1.f, 1.f, 1.f);
+			Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
 		K2_StrokeText(FString(std::format(L"{:.0f}m", Distance).data()), Color, TextPos);
+	}
+
+	void Render::DrawName(const FLinearColor& Color) {
+
+		auto SocketIndexItem = GetSocketIndex(SocketNum);
+		if (!SocketIndexItem.SocketNum) {
+			return;
+		}
+
+		auto HeadIndex = SocketIndexItem.data[Head];
+		if (!WorldToScreen[HeadIndex]) {
+			return;
+		}
+
+		auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
+		if (!PlayerState) {
+			return;
+		}
+
+		FVector2D TextPos = SocketScreen[HeadIndex];
+		TextPos.X -= 15.f;
+		TextPos.Y -= 30.f + 30.0f;
+
+		K2_StrokeText(APlayerState(PlayerState).GetPlayerName(), Color, TextPos);
+	}
+
+	void Render::DrawAura() {
+
+		auto PlayerController = APawn(Pawn).GetController();
+		if (!PlayerController) {
+			return;
+		}
+
+		auto SocketIndexItem = GetSocketIndex(SocketNum);
+		if (!SocketIndexItem.SocketNum) {
+			return;
+		}
+
+		auto FootIndex = SocketIndexItem.data[Foot_R];
+		if (!WorldToScreen[FootIndex]) {
+			return;
+		}
+
+		FVector Center = SocketTranslation[FootIndex];
+
+		auto Now = std::chrono::high_resolution_clock::now();
+
+		float DeltaTime = std::chrono::duration<float>(Now - Aura::LastTime).count();
+
+		Aura::LastTime = Now;
+
+		Aura::Angle += 90.f * DeltaTime;
+		if (Aura::Angle >= 360.f) {
+			Aura::Angle -= 360.f;
+		}
+
+		auto duration = Now - Aura::StartTime;
+		float elapsedTime = std::chrono::duration_cast<std::chrono::duration<float>>(duration).count();
+
+		Aura::Color.R = std::sin(Aura::Speed / 1500.0f * elapsedTime * 0.5f) * 0.5f + 0.5f;
+		Aura::Color.B = std::sin(Aura::Speed / 1500.0f * elapsedTime + 2.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f;
+		Aura::Color.G = std::sin(Aura::Speed / 1500.0f * elapsedTime + 4.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f;
+
+		const float Step = 360.0f / Aura::Segments;
+
+		FVector2D First{};
+		FVector2D Prev{};
+		bool HasFirst = false;
+
+		for (int i = 0; i <= Aura::Segments; i++) {
+
+			float AngleDeg = Aura::Angle + Step * i;
+			float Rad = AngleDeg * std::numbers::pi_v<float> / 180.0f;
+
+			FVector WorldPoint = {};
+			WorldPoint.X = Center.X + std::cos(Rad) * Aura::Radius;
+			WorldPoint.Y = Center.Y + std::sin(Rad) * Aura::Radius;
+			WorldPoint.Z = Center.Z;
+
+			FVector2D Screen = {};
+			if (!Engine::Default__GameplayStatics.ProjectWorldToScreen(PlayerController, WorldPoint, &Screen, false)) {
+				continue;
+			}
+
+			if (!HasFirst) {
+
+				First = Screen;
+
+				HasFirst = true;
+
+			} else {
+
+				Engine::K2_StrokeLine(Prev, Screen, Aura::Color);
+			}
+
+			Prev = Screen;
+		}
+
+		if (HasFirst) {
+
+			Engine::K2_StrokeLine(Prev, First, Aura::Color);
+		}
+	}
+
+	void Render::DrawTeamId() {
+
+		auto SocketIndexItem = GetSocketIndex(SocketNum);
+		if (!SocketIndexItem.SocketNum) {
+			return;
+		}
+
+		auto HeadIndex = SocketIndexItem.data[Head];
+		if (!WorldToScreen[HeadIndex]) {
+			return;
+		}
+
+		auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
+		if (!PlayerState) {
+			return;
+		}
+
+		auto TeamIndex = Default__SGTeamStatics.GetTeamIndex(PlayerState);
+
+		FVector2D TextPos = SocketScreen[HeadIndex];
+		TextPos.X -= 13.f;
+		TextPos.Y -= 30.f + 30.0f + 30.0f;
+
+		K2_StrokeText(FString(std::format(L"∂”ŒÈ: {}", TeamIndex).data()), FLinearColor(0.0f, 1.0f, 0.0f, 1.0f), TextPos);
 	}
 
 	void Start() {
@@ -245,6 +371,11 @@ namespace Player {
 			return;
 		}
 
+		auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Pawn.GetValue());
+		if (!PlayerState) {
+			return;
+		}
+
 		auto PlayerController = OwningGameInstance.GetPlayerController();
 		if (!PlayerController.GetAddress()) {
 			return;
@@ -261,6 +392,10 @@ namespace Player {
 			}
 
 			if (Actor.GetController() == PlayerController.GetValue()) {
+				continue;
+			}
+
+			if (Default__SGTeamStatics.IsTeammate(PlayerState, Default__SGCharacterStatics.GetPlayerState(Actor.GetValue()))) {
 				continue;
 			}
 
@@ -285,9 +420,30 @@ namespace Player {
 				Color = IsBot ? BotHidden : PlayerHidden;
 			}
 
-			PlayerRender.DrawSocket(Color);
+			if (IsShowBone) {
 
-			PlayerRender.DrawDistance();
+				PlayerRender.DrawSocket(Color);
+			}
+
+			if (IsShowName) {
+
+				PlayerRender.DrawName(Color);
+			}
+
+			if (IsShowDist) {
+
+				PlayerRender.DrawDistance();
+			}
+
+			if (IsShowAura) {
+
+				PlayerRender.DrawAura();
+			}
+
+			if (IsShowTeam) {
+
+				PlayerRender.DrawTeamId();
+			}
 		}
 	}
 }

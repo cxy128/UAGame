@@ -31,12 +31,17 @@ std::pair<uint64_t, uint32_t> GetImageBaseAndSize() {
 	return {ImageBase, GetImageSize(ImageBase)};
 }
 
-bool IsInProcessRange(uint64 Address) {
+bool IsInProcessRange(const uint64 Address) {
 
 	auto [ImageBase, ImageSize] = GetImageBaseAndSize();
 
 	return Address >= ImageBase && Address < (ImageBase + ImageSize);
 }
+
+//bool IsInProcessRange(const void* Address) {
+//
+//	return IsInProcessRange(reinterpret_cast<const uint64>(Address));
+//}
 
 uint64 ResolveRipRelativeIndirectAddress(uint64 Address) {
 

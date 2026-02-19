@@ -140,6 +140,11 @@ UEStruct UEStruct::GetSuper() const {
 	return UEStruct(*reinterpret_cast<void**>(Object + Offset::UStruct::SuperStruct));
 }
 
+UEFField UEStruct::GetChildProperties() const {
+
+	return UEFField(*reinterpret_cast<void**>(Object + Offset::UStruct::ChildProperties));
+}
+
 EClassCastFlags UEClass::GetCastFlags() const {
 
 	return *reinterpret_cast<EClassCastFlags*>(Object + Offset::UClass::CastFlags);
@@ -266,7 +271,7 @@ void UECanvas::K2_DrawBox(const FVector2D& ScreenPosition, const FVector2D& Scre
 	ProcessEvent(K2_DrawBox_Function, &Parms);
 }
 
-void UECanvas::K2_DrawLine(FVector2D& ScreenPositionA, FVector2D& ScreenPositionB, float Thickness, FLinearColor& RenderColor) {
+void UECanvas::K2_DrawLine(const FVector2D& ScreenPositionA, const FVector2D& ScreenPositionB, float Thickness, const FLinearColor& RenderColor) {
 
 	struct Canvas_K2_DrawLine final {
 
@@ -280,15 +285,15 @@ void UECanvas::K2_DrawLine(FVector2D& ScreenPositionA, FVector2D& ScreenPosition
 
 	Canvas_K2_DrawLine Parms{};
 
-	Parms.ScreenPositionA = std::move(ScreenPositionA);
-	Parms.ScreenPositionB = std::move(ScreenPositionB);
+	Parms.ScreenPositionA = ScreenPositionA;
+	Parms.ScreenPositionB = ScreenPositionB;
 	Parms.Thickness = Thickness;
-	Parms.RenderColor = std::move(RenderColor);
+	Parms.RenderColor = RenderColor;
 
 	ProcessEvent(K2_DrawLine_Function, &Parms);
 }
 
-void UECanvas::K2_DrawText(UEFont* RenderFont, const FString& RenderText, FVector2D& ScreenPosition, FVector2D& Scale, FLinearColor& RenderColor, float Kerning, FLinearColor& ShadowColor, FVector2D& ShadowOffset, bool bCentreX, bool bCentreY, bool bOutlined, FLinearColor& OutlineColor) {
+void UECanvas::K2_DrawText(UEFont* RenderFont, const FString& RenderText, const FVector2D& ScreenPosition, FVector2D& Scale, const FLinearColor& RenderColor, float Kerning, FLinearColor& ShadowColor, FVector2D& ShadowOffset, bool bCentreX, bool bCentreY, bool bOutlined, FLinearColor& OutlineColor) {
 
 	struct Canvas_K2_DrawText final {
 
@@ -312,9 +317,9 @@ void UECanvas::K2_DrawText(UEFont* RenderFont, const FString& RenderText, FVecto
 
 	Parms.RenderFont = RenderFont;
 	Parms.RenderText = RenderText;
-	Parms.ScreenPosition = std::move(ScreenPosition);
+	Parms.ScreenPosition = ScreenPosition;
 	Parms.Scale = std::move(Scale);
-	Parms.RenderColor = std::move(RenderColor);
+	Parms.RenderColor = RenderColor;
 	Parms.Kerning = Kerning;
 	Parms.ShadowColor = std::move(ShadowColor);
 	Parms.ShadowOffset = std::move(ShadowOffset);
@@ -412,6 +417,96 @@ ECharacterType UESGCharacterStatics::GetActorCharacterType(uint64 Actor) {
 	Parms.Actor = Actor;
 
 	ProcessEvent(GetActorCharacterType_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+FString UESGCharacterStatics::GetPlayerName(uint64 Character) {
+
+	struct SGCharacterStatics_GetPlayerName final {
+	public:
+		uint64 Character;
+		class FString ReturnValue;
+	};
+
+	SGCharacterStatics_GetPlayerName Parms{};
+
+	Parms.Character = Character;
+
+	ProcessEvent(GetPlayerName_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+uint64 UESGCharacterStatics::GetPlayerState(uint64 Character) {
+
+	struct SGCharacterStatics_GetPlayerState final {
+	public:
+		uint64 Character;
+		uint64 ReturnValue;
+	};
+
+	SGCharacterStatics_GetPlayerState Parms{};
+
+	Parms.Character = Character;
+
+	ProcessEvent(GetPlayerState_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+int32 UESGCharacterStatics::GetTeamIndex(uint64 Character) {
+
+	struct SGCharacterStatics_GetTeamIndex final {
+	public:
+		uint64 Character;
+		int32 ReturnValue;
+		uint8 Pad_C[0x4];
+	};
+
+	SGCharacterStatics_GetTeamIndex Parms{};
+
+	Parms.Character = Character;
+
+	ProcessEvent(GetTeamIndex_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+int32 UESGTeamStatics::GetTeamIndex(uint64 PlayerState) {
+
+	struct SGTeamStatics_GetTeamIndex final {
+	public:
+		uint64 PlayerState;
+		int32 ReturnValue;
+		uint8 Pad_C[0x4];
+	};
+
+	SGTeamStatics_GetTeamIndex Parms{};
+
+	Parms.PlayerState = PlayerState;
+
+	ProcessEvent(GetTeamIndex_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+bool UESGTeamStatics::IsTeammate(uint64 SelfPlayerState, uint64 OtherPlayerState) {
+
+	struct SGTeamStatics_IsTeammate final {
+	public:
+		uint64 SelfPlayerState;
+		uint64 OtherPlayerState;
+		bool ReturnValue;
+		uint8 Pad_11[0x7];
+	};
+
+	SGTeamStatics_IsTeammate Parms{};
+
+	Parms.SelfPlayerState = SelfPlayerState;
+	Parms.OtherPlayerState = OtherPlayerState;
+
+	ProcessEvent(IsTeammate_Function, &Parms);
 
 	return Parms.ReturnValue;
 }
@@ -524,6 +619,20 @@ bool APawn::IsBotControlled() const {
 	Pawn_IsBotControlled Parms{};
 
 	ProcessEvent(IsBotControlled_Function, &Parms);
+
+	return Parms.ReturnValue;
+}
+
+FString APlayerState::GetPlayerName() const {
+
+	struct PlayerState_GetPlayerName final {
+	public:
+		FString ReturnValue;
+	};
+
+	PlayerState_GetPlayerName Parms{};
+
+	ProcessEvent(GetPlayerName_Function, &Parms);
 
 	return Parms.ReturnValue;
 }

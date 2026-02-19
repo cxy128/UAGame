@@ -4,6 +4,18 @@
 
 constexpr DWORD PAGE_SIZE = 0x1000;
 
+inline bool IsDrawWindow = true;
+
+inline bool IsShowBone = true;
+
+inline bool IsShowName = false;
+
+inline bool IsShowDist = true;
+
+inline bool IsShowAura = true;
+
+inline bool IsShowTeam = false;
+
 typedef unsigned __int8 uint8;
 typedef unsigned __int16 uint16;
 typedef unsigned __int32 uint32;

@@ -43,9 +43,15 @@ public:
 
 	static void InitName();
 
+	static void InitUClass();
+
 	static void InitUStruct();
 
-	static void InitUClass();
+	static void InitUFunction();
+
+	static void InitFField();
+
+	static bool InitProcessEvent();
 
 	static void InitGWorld();
 
@@ -70,24 +76,11 @@ public:
 		return UEType();
 	}
 
+	static UEStruct FindStructFast(const std::string& Name);
+
 	static UEClass FindClassFast(std::string Name);
 
 	template<typename UEType = UEObject> static UEType FindObjectFastInOuter(std::string Name, std::string Outer);
-
-	//template<typename UEType> inline UEType FindObjectFast__inline(std::string Name, EClassCastFlags RequiredType) {
-
-	//	auto ObjArray = ObjectArray();
-
-	//	for (UEObject Object : ObjArray) {
-
-	//		if (Object.IsA(RequiredType) && Object.GetName() == Name) {
-
-	//			return Object.Cast<UEType>();
-	//		}
-	//	}
-
-	//	return UEType();
-	//}
 
 public:
 

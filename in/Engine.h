@@ -21,10 +21,13 @@ namespace Engine {
 	inline ASGCharacter SGCharacter;
 	inline UESGActorStatics Default__SGActorStatics;
 	inline UESGCharacterStatics Default__SGCharacterStatics;
+	inline UESGTeamStatics Default__SGTeamStatics;
 
 	inline UECanvas Canvas;
 
 	bool Init();
+
+	void FindOffset();
 
 	bool FindFunction();
 
@@ -32,9 +35,9 @@ namespace Engine {
 
 	bool FindFont();
 
-	void K2_StrokeLine(FVector2D& P1, FVector2D& P2, FLinearColor& Color, float LineThickness = 1.0f);
+	void K2_StrokeLine(const FVector2D& P1, const FVector2D& P2, const FLinearColor& Color, float LineThickness = 1.0f);
 
-	void K2_StrokeText(const FString& RenderText, FLinearColor& Color, FVector2D& Pos, float ScaleValue = 1.0f, bool bCenter = false, bool bOutline = true);
+	void K2_StrokeText(const FString& RenderText, const FLinearColor& Color, const FVector2D& Pos, float ScaleValue = 1.0f, bool bCenter = false, bool bOutline = true);
 
 	void K2_DrawBox(const FVector2D& ScreenPosition, const FVector2D& ScreenSize, const FLinearColor& RenderColor, float Thickness = 0.0f);
 }

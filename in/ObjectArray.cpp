@@ -46,6 +46,14 @@ void ObjectArray::Init() {
 
 	InitUClass();
 
+	InitUFunction();
+
+	InitFField();
+
+	// TODO
+
+	InitProcessEvent();
+
 	InitGWorld();
 }
 
@@ -97,7 +105,7 @@ void ObjectArray::InitGObjects(bool ScanAllMemory) {
 				return *reinterpret_cast<void**>(ItemPtr + ObjectItemObjectBaseOffset);
 			};
 
-			Print("--> UAGame.exe GObjects: %p \n", GObjects);
+			Print("--> UAGame.exe GObjects %p \n", GObjects);
 
 			return;
 		}
@@ -154,6 +162,8 @@ void ObjectArray::InitNumElementsPerChunk(uint8* ChunksPtr) {
 		if (*reinterpret_cast<int32*>(ObjAtIdx374 + i) == 0x374 && *reinterpret_cast<int32*>(ObjAtIdx106 + i) == 0x106) {
 
 			IndexOffset = i;
+
+			Offset::FChunkedFixedUObjectArray::NumElementsPerChunk = 0x10000;
 
 			break;
 		}
@@ -274,6 +284,35 @@ void ObjectArray::InitName() {
 	Print("--> UAGame.exe Name 0x%lX 0x%lX 0x%lX \n", Offset::FName::ComparisonIndex, Offset::FName::Number, Offset::FName::SizeOf);
 }
 
+void ObjectArray::InitUClass() {
+
+	auto FindCastFlagsOffset = []() -> int32 {
+
+		std::vector<std::pair<void*, EClassCastFlags>> Infos = {};
+
+		Infos.push_back({ObjectArray::FindObjectFast("Actor").GetAddress(), EClassCastFlags::Actor});
+		Infos.push_back({ObjectArray::FindObjectFast("Class").GetAddress(), EClassCastFlags::Field | EClassCastFlags::Struct | EClassCastFlags::Class});
+
+		return Offset::Find(Infos);
+	};
+
+	auto FindDefaultObjectOffset = []() -> int32 {
+
+		std::vector<std::pair<void*, void*>> Infos = {};
+
+		Infos.push_back({ObjectArray::FindObjectFast("Object").GetAddress(), ObjectArray::FindObjectFast("Default__Object").GetAddress()});
+		Infos.push_back({ObjectArray::FindObjectFast("Field").GetAddress(), ObjectArray::FindObjectFast("Default__Field").GetAddress()});
+
+		return Offset::Find(Infos, 0x28, 0x200);
+	};
+
+	Offset::UClass::CastFlags = FindCastFlagsOffset();
+
+	Offset::UClass::ClassDefaultObject = FindDefaultObjectOffset();
+
+	Print("--> UAGame.exe UClass 0x%lX [ClassDefaultObject: 0x%lX] \n", Offset::UClass::CastFlags, Offset::UClass::ClassDefaultObject);
+}
+
 void ObjectArray::InitUStruct() {
 
 	auto FindChildOffset = []() -> int32 {
@@ -355,36 +394,152 @@ void ObjectArray::InitUStruct() {
 		Offset::UStruct::ChildProperties = FindChildPropertiesOffset();
 	}
 
-	Print("--> UAGame.exe UStruct 0x%lX 0x%lX 0x%lX 0x%lX 0x%lX \n", Offset::UStruct::Children, Offset::UStruct::SuperStruct, Offset::UStruct::Size, Offset::UStruct::MinAlignment, Offset::UStruct::ChildProperties);
+	Print("--> UAGame.exe UStruct 0x%lX 0x%lX 0x%lX 0x%lX [ChildProperties: 0x%lX] \n", Offset::UStruct::Children, Offset::UStruct::SuperStruct, Offset::UStruct::Size, Offset::UStruct::MinAlignment, Offset::UStruct::ChildProperties);
 }
 
-void ObjectArray::InitUClass() {
+void ObjectArray::InitUFunction() {
 
-	auto FindCastFlagsOffset = []() -> int32 {
+	{
+		std::vector<std::pair<void*, EFunctionFlags>> Infos;
 
-		std::vector<std::pair<void*, EClassCastFlags>> Infos = {};
+		Infos.push_back({ObjectArray::FindObjectFast("WasInputKeyJustPressed", EClassCastFlags::Function).GetAddress(), EFunctionFlags::Final | EFunctionFlags::Native | EFunctionFlags::Public | EFunctionFlags::BlueprintCallable | EFunctionFlags::BlueprintPure | EFunctionFlags::Const});
+		Infos.push_back({ObjectArray::FindObjectFast("ToggleSpeaking", EClassCastFlags::Function).GetAddress(), EFunctionFlags::Exec | EFunctionFlags::Native | EFunctionFlags::Public});
+		Infos.push_back({ObjectArray::FindObjectFast("SwitchLevel", EClassCastFlags::Function).GetAddress(), EFunctionFlags::Exec | EFunctionFlags::Native | EFunctionFlags::Public});
 
-		Infos.push_back({ObjectArray::FindObjectFast("Actor").GetAddress(), EClassCastFlags::Actor});
-		Infos.push_back({ObjectArray::FindObjectFast("Class").GetAddress(), EClassCastFlags::Field | EClassCastFlags::Struct | EClassCastFlags::Class});
+		if (Infos[2].first == nullptr) {
+			Infos[2].first = ObjectArray::FindObjectFast("FOV", EClassCastFlags::Function).GetAddress();
+		}
 
-		return Offset::Find(Infos);
-	};
+		int32 FunctionFlags = Offset::Find(Infos);
 
-	auto FindDefaultObjectOffset = []() -> int32 {
+		if (FunctionFlags == Offset::NotFound) {
 
-		std::vector<std::pair<void*, void*>> Infos = {};
+			for (auto& [_, Flags] : Infos) {
 
-		Infos.push_back({ObjectArray::FindObjectFast("Object").GetAddress(), ObjectArray::FindObjectFast("Default__Object").GetAddress()});
-		Infos.push_back({ObjectArray::FindObjectFast("Field").GetAddress(), ObjectArray::FindObjectFast("Default__Field").GetAddress()});
+				Flags |= EFunctionFlags::RequiredAPI;
+			}
 
-		return Offset::Find(Infos, 0x28, 0x200);
-	};
+			FunctionFlags = Offset::Find(Infos);
+		}
 
-	Offset::UClass::CastFlags = FindCastFlagsOffset();
+		Offset::UFunction::FunctionFlags = FunctionFlags;
+	}
 
-	Offset::UClass::ClassDefaultObject = FindDefaultObjectOffset();
+	{
+		std::vector<std::pair<void*, EFunctionFlags>> Infos;
 
-	Print("--> UAGame.exe UClass 0x%lX 0x%lX \n", Offset::UClass::CastFlags, Offset::UClass::ClassDefaultObject);
+		uint64 WasInputKeyJustPressed = reinterpret_cast<uint64>(ObjectArray::FindObjectFast("WasInputKeyJustPressed", EClassCastFlags::Function).GetAddress());
+		uint64 ToggleSpeaking = reinterpret_cast<uint64>(ObjectArray::FindObjectFast("ToggleSpeaking", EClassCastFlags::Function).GetAddress());
+		uint64 SwitchLevel_Or_FOV = reinterpret_cast<uint64>(ObjectArray::FindObjectFast("SwitchLevel", EClassCastFlags::Function).GetAddress());
+
+		if (!SwitchLevel_Or_FOV) {
+			SwitchLevel_Or_FOV = reinterpret_cast<uint64>(ObjectArray::FindObjectFast("FOV", EClassCastFlags::Function).GetAddress());
+		}
+
+		for (int i = 0x30; i < 0x140; i += sizeof(void*)) {
+
+			if (IsInProcessRange(*reinterpret_cast<uintptr_t*>(WasInputKeyJustPressed + i)) && IsInProcessRange(*reinterpret_cast<uintptr_t*>(ToggleSpeaking + i)) && IsInProcessRange(*reinterpret_cast<uintptr_t*>(SwitchLevel_Or_FOV + i))) {
+
+				Offset::UFunction::ExecFunction = i;
+
+				break;
+			}
+		}
+	}
+
+	Print("--> UAGame.exe UFunction 0x%lX 0x%lX \n", Offset::UFunction::FunctionFlags, Offset::UFunction::ExecFunction);
+}
+
+void ObjectArray::InitFField() {
+
+	auto GuidChildProperties = ObjectArray::FindStructFast("Guid").GetChildProperties();
+
+	auto VectorChildProperties = ObjectArray::FindStructFast("Vector").GetChildProperties();
+
+	{
+		Offset::FField::Next = Offset::GetValidPointer(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), Offset::FField::Owner + 0x8, 0x48);
+	}
+
+	{
+		Offset::FField::Class = Offset::GetValidPointer<false>(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), 0x8, 0x30, true);
+	}
+
+	{
+		auto FindFFieldNameOffset = [&]() -> uint32 {
+
+			std::string GuidChildPropertiesName = GuidChildProperties.GetName();
+
+			std::string VectorChildPropertiesName = VectorChildProperties.GetName();
+
+			if ((GuidChildPropertiesName == "A" || GuidChildPropertiesName == "D") && (VectorChildPropertiesName == "X" || VectorChildPropertiesName == "Z")) {
+
+				return Offset::FField::Name;
+			}
+
+			for (Offset::FField::Name = Offset::FField::Owner; Offset::FField::Name < 0x40; Offset::FField::Name += 4) {
+
+				GuidChildPropertiesName = GuidChildProperties.GetName();
+				VectorChildPropertiesName = VectorChildProperties.GetName();
+
+				if ((GuidChildPropertiesName == "A" || GuidChildPropertiesName == "D") && (VectorChildPropertiesName == "X" || VectorChildPropertiesName == "Z")) {
+
+					return Offset::FField::Name;
+				}
+			}
+
+			return Offset::NotFound;
+		};
+
+		// TODO
+
+		Offset::FField::Name = FindFFieldNameOffset();
+	}
+
+	{
+		Offset::FField::Flags = Offset::FField::Name + Offset::FName::SizeOf;
+	}
+
+	Print("--> UAGame.exe FField 0x%lX 0x%lX 0x%lX 0x%lX \n", Offset::FField::Next, Offset::FField::Class, Offset::FField::Name, Offset::FField::Flags);
+}
+
+bool ObjectArray::InitProcessEvent() {
+
+	PVOID* VTable = *(PVOID**)ObjectArray::GetByIndex(0).GetAddress();
+
+	for (int i = 0; i < 0x150; i++) {
+
+		uint64 CurrentFuncAddress = reinterpret_cast<uint64>(VTable[i]);
+
+		if (!CurrentFuncAddress || !IsInProcessRange(CurrentFuncAddress)) {
+			break;
+		}
+
+		if (*reinterpret_cast<uint8*>(CurrentFuncAddress) == static_cast<uint8>(0xE9)) {
+
+			CurrentFuncAddress = CurrentFuncAddress + 5 + *reinterpret_cast<const int32*>(CurrentFuncAddress + 1);
+
+			if (!IsInProcessRange(CurrentFuncAddress)) {
+				break;
+			}
+		}
+
+		if (!FindPatternInRange({0xF7, 0xFFFF'FFFF , Offset::UFunction::FunctionFlags, 0x0, 0x0, 0x0, 0x0, 0x04, 0x0, 0x0}, reinterpret_cast<uint8*>(CurrentFuncAddress), 0x400)) {
+			continue;
+		}
+
+		if (!FindPatternInRange({0xF7, 0xFFFF'FFFF, Offset::UFunction::FunctionFlags, 0x0, 0x0, 0x0, 0x0, 0x04, 0x0, 0x0}, reinterpret_cast<uint8*>(CurrentFuncAddress), 0xF00)) {
+			continue;
+		}
+
+		Offset::ProcessEventIndex = i;
+		Offset::ProcessEvent = GetOffset(CurrentFuncAddress);
+
+		Print("--> UAGame.exe FindProcessEvent %lX %lX \n", Offset::ProcessEventIndex, Offset::ProcessEvent);
+
+		return true;
+	}
+
+	return false;
 }
 
 void ObjectArray::InitGWorld() {
@@ -473,6 +628,11 @@ template<typename UEType>  UEType ObjectArray::GetByIndex(int32 Index) {
 UEClass ObjectArray::FindClassFast(std::string Name) {
 
 	return FindObjectFast<UEClass>(Name, EClassCastFlags::Class);
+}
+
+UEStruct ObjectArray::FindStructFast(const std::string& Name) {
+
+	return FindObjectFast<UEClass>(Name, EClassCastFlags::Struct);
 }
 
 template<typename UEType>  UEType ObjectArray::FindObjectFastInOuter(std::string Name, std::string Outer) {

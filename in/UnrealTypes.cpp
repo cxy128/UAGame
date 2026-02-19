@@ -38,7 +38,7 @@ bool FName::Init() {
 		return TempSting.ToString();
 	};
 
-	Print("--> UAGame.exe AppendString: %p 0x%lX \n", AppendString, Offset::FName::AppendString);
+	Print("--> UAGame.exe AppendString %p 0x%lX \n", AppendString, Offset::FName::AppendString);
 
 	return true;
 }

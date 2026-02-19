@@ -33,7 +33,9 @@ uint32 GetImageSize(uint64 ImageBase);
 
 std::pair<uint64, uint32> GetImageBaseAndSize();
 
-bool IsInProcessRange(uint64 Address);
+bool IsInProcessRange(const uint64 Address);
+
+//bool IsInProcessRange(const void* Address);
 
 uint64 ResolveRipRelativeIndirectAddress(uint64 Address);
 

@@ -54,7 +54,7 @@ public:
 
 	void ProcessEvent(void* Function, void* Parms) const {
 
-		CallGameFunction(GetVirtualFunction<void(*)(void* Object, void* Function, void* Parms)>(this->Object, Offset::ProcessEventIdx), this->Object, Function, Parms);
+		CallGameFunction(GetVirtualFunction<void(*)(void* Object, void* Function, void* Parms)>(this->Object, Offset::ProcessEventIndex), this->Object, Function, Parms);
 	}
 
 public:
@@ -102,18 +102,20 @@ public:
 	}
 };
 
-class UEField : public UEObject {
+class UEFField : public UEObject {
 
 	using UEObject::UEObject;
 };
 
-class UEStruct : public UEField {
+class UEStruct : public UEFField {
 
-	using UEField::UEField;
+	using UEFField::UEFField;
 
 public:
 
 	UEStruct GetSuper() const;
+
+	UEFField GetChildProperties() const;
 };
 
 class UEClass : public UEStruct {
@@ -220,9 +222,9 @@ public:
 
 	void K2_DrawBox(const FVector2D& ScreenPosition, const FVector2D& ScreenSize, float Thickness, const FLinearColor& RenderColor);
 
-	void K2_DrawLine(FVector2D& ScreenPositionA, FVector2D& ScreenPositionB, float Thickness, FLinearColor& RenderColor);
+	void K2_DrawLine(const FVector2D& ScreenPositionA, const FVector2D& ScreenPositionB, float Thickness, const FLinearColor& RenderColor);
 
-	void K2_DrawText(UEFont* RenderFont, const FString& RenderText, FVector2D& ScreenPosition, FVector2D& Scale, FLinearColor& RenderColor, float Kerning, FLinearColor& ShadowColor, FVector2D& ShadowOffset, bool bCentreX, bool bCentreY, bool bOutlined, FLinearColor& OutlineColor);
+	void K2_DrawText(UEFont* RenderFont, const FString& RenderText, const FVector2D& ScreenPosition, FVector2D& Scale, const FLinearColor& RenderColor, float Kerning, FLinearColor& ShadowColor, FVector2D& ShadowOffset, bool bCentreX, bool bCentreY, bool bOutlined, FLinearColor& OutlineColor);
 };
 
 class UESGActorStatics : public UEObject {
@@ -258,9 +260,38 @@ public:
 
 	inline static void* GetActorCharacterType_Function = nullptr;
 
+	inline static void* GetPlayerName_Function = nullptr;
+
+	inline static void* GetPlayerState_Function = nullptr;
+
+	inline static void* GetTeamIndex_Function = nullptr;
+
 public:
 
 	ECharacterType GetActorCharacterType(uint64 Actor);
+
+	FString GetPlayerName(uint64 Character);
+
+	uint64 GetPlayerState(uint64 Character);
+
+	int32 GetTeamIndex(uint64 Character);
+};
+
+class UESGTeamStatics : public UEObject {
+
+	using UEObject::UEObject;
+
+public:
+
+	inline static void* GetTeamIndex_Function = nullptr;
+
+	inline static void* IsTeammate_Function = nullptr;
+
+public:
+
+	int32 GetTeamIndex(uint64 PlayerState);
+
+	bool IsTeammate(uint64 SelfPlayerState, uint64 OtherPlayerState);
 };
 
 class APlayerController : public UEObject {
@@ -323,3 +354,15 @@ public:
 	bool IsBotControlled() const;
 };
 
+class APlayerState : public UEObject {
+
+	using UEObject::UEObject;
+
+public:
+
+	inline static void* GetPlayerName_Function = nullptr;
+
+public:
+
+	FString GetPlayerName() const;
+};
