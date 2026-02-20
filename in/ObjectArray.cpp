@@ -50,7 +50,7 @@ void ObjectArray::Init() {
 
 	InitFField();
 
-	// TODO
+	InitFProperty();
 
 	InitProcessEvent();
 
@@ -265,16 +265,22 @@ void ObjectArray::InitName() {
 
 	if (FNameSize == 0x8 && FNameFirstInt == FNameSecondInt) {
 
+		Offset::Setting::IsUseCasePreservingName = true;
+
 		Offset::FName::Number = -0x1;
 		Offset::FName::SizeOf = 0x8;
 
-	} else if (FNameSize == 0x10) {
+	} else if (FNameSize > 0x8) {
+
+		Offset::Setting::IsUseCasePreservingName = true;
 
 		Offset::FName::Number = FNameFirstInt == FNameSecondInt ? 0x8 : 0x4;
 
 		Offset::FName::SizeOf = 0xC;
 
 	} else {
+
+		Offset::Setting::IsUseCasePreservingName = false;
 
 		Offset::FName::Number = 0x4;
 
@@ -334,7 +340,7 @@ void ObjectArray::InitUStruct() {
 			return Offset::Find(Infos);
 		}
 
-		Offset::Setting::UseFProperty = true;
+		Offset::Setting::IsUseFProperty = true;
 
 		return Offset::Find(Infos);
 	};
@@ -389,7 +395,7 @@ void ObjectArray::InitUStruct() {
 
 	Offset::UStruct::MinAlignment = FindMinAlignmentOffset();
 
-	if (Offset::Setting::UseFProperty) {
+	if (Offset::Setting::IsUseFProperty) {
 
 		Offset::UStruct::ChildProperties = FindChildPropertiesOffset();
 	}
@@ -453,53 +459,121 @@ void ObjectArray::InitUFunction() {
 void ObjectArray::InitFField() {
 
 	auto GuidChildProperties = ObjectArray::FindStructFast("Guid").GetChildProperties();
-
 	auto VectorChildProperties = ObjectArray::FindStructFast("Vector").GetChildProperties();
 
-	{
-		Offset::FField::Next = Offset::GetValidPointer(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), Offset::FField::Owner + 0x8, 0x48);
-	}
+	Offset::FField::Next = Offset::GetValidPointer(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), Offset::FField::Owner + 0x8, 0x48);
+	Offset::FField::Class = Offset::GetValidPointer<false>(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), 0x8, 0x30, true);
+	Offset::FField::Flags = Offset::FField::Name + Offset::FName::SizeOf;
 
-	{
-		Offset::FField::Class = Offset::GetValidPointer<false>(GuidChildProperties.GetAddress(), VectorChildProperties.GetAddress(), 0x8, 0x30, true);
-	}
+	if (Offset::Setting::IsUseFProperty) {
 
-	{
-		auto FindFFieldNameOffset = [&]() -> uint32 {
+		const int32 OffsetToCheck = Offset::FField::Owner + 0x8;
+		void* PossibleNextPtrOrBool0 = *(void**)((uint8*)ObjectArray::FindClassFast("Actor").GetChildProperties().GetAddress() + OffsetToCheck);
+		void* PossibleNextPtrOrBool1 = *(void**)((uint8*)ObjectArray::FindClassFast("ActorComponent").GetChildProperties().GetAddress() + OffsetToCheck);
+		void* PossibleNextPtrOrBool2 = *(void**)((uint8*)ObjectArray::FindClassFast("Pawn").GetChildProperties().GetAddress() + OffsetToCheck);
 
-			std::string GuidChildPropertiesName = GuidChildProperties.GetName();
+		auto IsValidPtr = [](void* a) -> bool {
 
-			std::string VectorChildPropertiesName = VectorChildProperties.GetName();
-
-			if ((GuidChildPropertiesName == "A" || GuidChildPropertiesName == "D") && (VectorChildPropertiesName == "X" || VectorChildPropertiesName == "Z")) {
-
-				return Offset::FField::Name;
-			}
-
-			for (Offset::FField::Name = Offset::FField::Owner; Offset::FField::Name < 0x40; Offset::FField::Name += 4) {
-
-				GuidChildPropertiesName = GuidChildProperties.GetName();
-				VectorChildPropertiesName = VectorChildProperties.GetName();
-
-				if ((GuidChildPropertiesName == "A" || GuidChildPropertiesName == "D") && (VectorChildPropertiesName == "X" || VectorChildPropertiesName == "Z")) {
-
-					return Offset::FField::Name;
-				}
-			}
-
-			return Offset::NotFound;
+			return IsUserAddressValid(a) && (uint64_t(a) & 0x1) == 0;
 		};
 
-		// TODO
+		if (IsValidPtr(PossibleNextPtrOrBool0) && IsValidPtr(PossibleNextPtrOrBool1) && IsValidPtr(PossibleNextPtrOrBool2)) {
 
-		Offset::FField::Name = FindFFieldNameOffset();
+			Offset::FField::Next -= 0x08;
+			Offset::FField::Name -= 0x08;
+			Offset::FField::Flags -= 0x08;
+		}
+	}
+
+	if (Offset::Setting::IsUseCasePreservingName) {
+
+		Offset::FField::Flags += 0x8;
+
+		Offset::FFieldClass::Id += 0x08;
+		Offset::FFieldClass::CastFlags += 0x08;
+		Offset::FFieldClass::ClassFlags += 0x08;
+		Offset::FFieldClass::SuperClass += 0x08;
+	}
+
+	Print("--> UAGame.exe FField 0x%lX 0x%lX 0x%lX \n", Offset::FField::Next, Offset::FField::Class, Offset::FField::Flags);
+
+	Print("--> UAGame.exe FFieldClass 0x%lX 0x%lX \n", Offset::FFieldClass::Id, Offset::FFieldClass::SuperClass);
+}
+
+void ObjectArray::InitFProperty() {
+
+	UEStruct Guid = ObjectArray::FindStructFast("Guid");
+	UEStruct Color = ObjectArray::FindStructFast("Color");
+
+	auto A = Guid.FindMember("A");
+	auto C = Guid.FindMember("C");
+	auto D = Guid.FindMember("D");
+
+	{
+		std::vector<std::pair<void*, int32_t>> Infos;
+
+		Infos.push_back({A.GetAddress(), 0x04});
+		Infos.push_back({C.GetAddress(), 0x04});
+		Infos.push_back({D.GetAddress(), 0x04});
+
+		Offset::FProperty::ElementSize = Offset::Find(Infos);
 	}
 
 	{
-		Offset::FField::Flags = Offset::FField::Name + Offset::FName::SizeOf;
+		std::vector<std::pair<void*, int32_t>> Infos;
+
+		Infos.push_back({A.GetAddress(), 0x01});
+		Infos.push_back({C.GetAddress(), 0x01});
+		Infos.push_back({D.GetAddress(), 0x01});
+
+		const int32_t MinOffset = Offset::FProperty::ElementSize - 0x10;
+		const int32_t MaxOffset = Offset::FProperty::ElementSize + 0x10;
+
+		Offset::FProperty::ArrayDim = Offset::Find(Infos, MinOffset, MaxOffset);
 	}
 
-	Print("--> UAGame.exe FField 0x%lX 0x%lX 0x%lX 0x%lX \n", Offset::FField::Next, Offset::FField::Class, Offset::FField::Name, Offset::FField::Flags);
+	{
+		std::vector<std::pair<void*, int32_t>> Infos;
+
+		Infos.push_back({Color.FindMember("B").GetAddress(), 0x00});
+		Infos.push_back({Color.FindMember("G").GetAddress(), 0x01});
+		Infos.push_back({C.GetAddress(), 0x08});
+
+		if (Infos[2].first == nullptr) {
+
+			Infos[2].first = Color.FindMember("r").GetAddress();
+		}
+
+		Offset::FProperty::Offset = Offset::Find(Infos);
+	}
+
+	{
+		std::vector<std::pair<void*, EPropertyFlags>> Infos;
+
+		constexpr EPropertyFlags GuidMemberFlags = EPropertyFlags::Edit | EPropertyFlags::ZeroConstructor | EPropertyFlags::SaveGame | EPropertyFlags::IsPlainOldData | EPropertyFlags::NoDestructor | EPropertyFlags::HasGetValueTypeHash;
+		constexpr EPropertyFlags ColorMemberFlags = EPropertyFlags::Edit | EPropertyFlags::BlueprintVisible | EPropertyFlags::ZeroConstructor | EPropertyFlags::SaveGame | EPropertyFlags::IsPlainOldData | EPropertyFlags::NoDestructor | EPropertyFlags::HasGetValueTypeHash;
+
+		Infos.push_back({A.GetAddress(), GuidMemberFlags});
+		Infos.push_back({Color.FindMember("R").GetAddress(), ColorMemberFlags});
+
+		if (Infos[1].first == nullptr) {
+
+			Infos[1].first = Color.FindMember("r").GetAddress();
+		}
+
+		int FlagsOffset = Offset::Find(Infos);
+
+		if (FlagsOffset == Offset::NotFound) {
+			Infos[0].second |= EPropertyFlags::NativeAccessSpecifierPublic;
+			Infos[1].second |= EPropertyFlags::NativeAccessSpecifierPublic;
+
+			FlagsOffset = Offset::Find(Infos);
+		}
+
+		Offset::FProperty::PropertyFlags = FlagsOffset;
+	}
+
+	Print("--> UAGame.exe FProperty 0x%lX 0x%lX 0x%lX 0x%lX \n", Offset::FProperty::ElementSize, Offset::FProperty::ArrayDim, Offset::FProperty::Offset, Offset::FProperty::PropertyFlags);
 }
 
 bool ObjectArray::InitProcessEvent() {
@@ -633,21 +707,6 @@ UEClass ObjectArray::FindClassFast(std::string Name) {
 UEStruct ObjectArray::FindStructFast(const std::string& Name) {
 
 	return FindObjectFast<UEClass>(Name, EClassCastFlags::Struct);
-}
-
-template<typename UEType>  UEType ObjectArray::FindObjectFastInOuter(std::string Name, std::string Outer) {
-
-	auto ObjArray = ObjectArray();
-
-	for (UEObject Object : ObjArray) {
-
-		if (Object.GetName() == Name && Object.GetOuter().GetName() == Outer) {
-
-			return Object.Cast<UEType>();
-		}
-	}
-
-	return UEType();
 }
 
 ObjectArray::ObjectsIterator ObjectArray::begin() {

@@ -102,20 +102,114 @@ public:
 	}
 };
 
-class UEFField : public UEObject {
+class UEFProperty {
 
-	using UEObject::UEObject;
+protected:
+
+	uint8* Base;
+
+public:
+
+	UEFProperty() = default;
+
+	UEFProperty(const UEFProperty&) = default;
+
+	UEFProperty(void* NewProperty) : Base(reinterpret_cast<uint8*>(NewProperty)) {
+
+	}
+
+public:
+
+	uint64 GetValue();
+
+	void* GetAddress();
+
+	const void* GetAddress() const;
+
+	uint32 GetOffset() const;
 };
 
-class UEStruct : public UEFField {
+class UEFFieldClass {
 
-	using UEFField::UEFField;
+protected:
+
+	uint8* Class;
+
+public:
+
+	UEFFieldClass() = default;
+
+	UEFFieldClass(void* NewFieldClass) : Class(reinterpret_cast<uint8*>(NewFieldClass)) {
+
+	}
+
+	UEFFieldClass(const UEFFieldClass& OldFieldClass) : Class(reinterpret_cast<uint8*>(OldFieldClass.Class)) {
+
+	}
+
+public:
+
+	EClassCastFlags GetCastFlags() const;
+
+	bool IsType(EClassCastFlags Flags) const;
+};
+
+class UEFField {
+
+protected:
+
+	uint8* Field;
+
+public:
+
+	UEFField() = default;
+
+	UEFField(void* NewField) : Field(reinterpret_cast<uint8*>(NewField)) {
+
+	}
+
+	UEFField(const UEFField& OldField) : Field(reinterpret_cast<uint8*>(OldField.Field)) {
+
+	}
+
+public:
+
+	explicit operator bool() const;
+
+	bool operator==(const UEFField& Other) const;
+
+	bool operator!=(const UEFField& Other) const;
+
+public:
+
+	void* GetAddress();
+
+	const void* GetAddress() const;
+
+	UEFField GetNext() const;
+
+	UEFFieldClass GetClass() const;
+
+	bool IsA(EClassCastFlags Flags) const;
+
+	FName GetFName() const;
+
+	std::string GetName() const;
+
+	template<typename UEType> UEType Cast() const;
+};
+
+class UEStruct : public UEObject {
+
+	using UEObject::UEObject;
 
 public:
 
 	UEStruct GetSuper() const;
 
 	UEFField GetChildProperties() const;
+
+	UEFProperty FindMember(const std::string& MemberName, EClassCastFlags TypeFlags = EClassCastFlags::None) const;
 };
 
 class UEClass : public UEStruct {
@@ -129,18 +223,18 @@ public:
 	bool IsType(EClassCastFlags TypeFlag) const;
 };
 
-class UEEngine : public UEObject {
+class UEEngine : public UEClass {
 
-	using UEObject::UEObject;
+	using UEClass::UEClass;
 
 public:
 
 	class UEGameViewportClient GetGameViewport() const;
 };
 
-class UEGameViewportClient : public UEObject {
+class UEGameViewportClient : public UEClass {
 
-	using UEObject::UEObject;
+	using UEClass::UEClass;
 
 public:
 
@@ -227,9 +321,9 @@ public:
 	void K2_DrawText(UEFont* RenderFont, const FString& RenderText, const FVector2D& ScreenPosition, FVector2D& Scale, const FLinearColor& RenderColor, float Kerning, FLinearColor& ShadowColor, FVector2D& ShadowOffset, bool bCentreX, bool bCentreY, bool bOutlined, FLinearColor& OutlineColor);
 };
 
-class UESGActorStatics : public UEObject {
+class UESGActorStatics : public UEStruct {
 
-	using UEObject::UEObject;
+	using UEStruct::UEStruct;
 
 public:
 
@@ -252,9 +346,9 @@ public:
 	bool IsInBattle(uint64 World);
 };
 
-class UESGCharacterStatics : public UEObject {
+class UESGCharacterStatics : public UEStruct {
 
-	using UEObject::UEObject;
+	using UEStruct::UEStruct;
 
 public:
 

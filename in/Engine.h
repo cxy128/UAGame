@@ -16,22 +16,30 @@ namespace Engine {
 	inline FVector2D ScreenCenter;
 
 	inline UEEngine UAGameEngine;
-	inline UEGameViewportClient SGGameViewportClient;
 	inline UEGameplayStatics Default__GameplayStatics;
 	inline ASGCharacter SGCharacter;
 	inline UESGActorStatics Default__SGActorStatics;
 	inline UESGCharacterStatics Default__SGCharacterStatics;
 	inline UESGTeamStatics Default__SGTeamStatics;
 
+	inline UEClass GameViewportClient;
+	inline UEClass EngineWorld;
+	inline UEClass EngineGameStateBase;
+	inline UEClass EngineGameInstance;
+	inline UEClass EngineLocalPlayer;
+	inline UEClass EnginePlayerController;
+	inline UEClass EnginePlayerCameraManager;
+	inline UEClass EnginePawn;
+
 	inline UECanvas Canvas;
 
 	bool Init();
 
-	void FindOffset();
-
 	bool FindFunction();
 
 	bool FindObject();
+
+	void FindOffset();
 
 	bool FindFont();
 

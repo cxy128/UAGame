@@ -51,6 +51,8 @@ public:
 
 	static void InitFField();
 
+	static void InitFProperty();
+
 	static bool InitProcessEvent();
 
 	static void InitGWorld();
@@ -80,7 +82,20 @@ public:
 
 	static UEClass FindClassFast(std::string Name);
 
-	template<typename UEType = UEObject> static UEType FindObjectFastInOuter(std::string Name, std::string Outer);
+	template<typename UEType = UEObject> static UEType FindObjectFastInOuter(std::string Name, std::string Outer) {
+
+		auto ObjArray = ObjectArray();
+
+		for (UEObject Object : ObjArray) {
+
+			if (Object.GetName() == Name && Object.GetOuter().GetName() == Outer) {
+
+				return Object.Cast<UEType>();
+			}
+		}
+
+		return UEType();
+	}
 
 public:
 

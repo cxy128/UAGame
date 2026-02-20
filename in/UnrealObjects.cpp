@@ -135,6 +135,91 @@ bool UEObject::HasAnyFlags(EObjectFlags Flags) const {
 	return GetFlags() & Flags;
 }
 
+uint64 UEFProperty::GetValue() {
+
+	return reinterpret_cast<uint64>(Base);
+}
+
+void* UEFProperty::GetAddress() {
+
+	return Base;
+}
+
+const void* UEFProperty::GetAddress() const {
+
+	return Base;
+}
+
+uint32 UEFProperty::GetOffset() const {
+
+	return Base ? *reinterpret_cast<uint32*>(Base + Offset::FProperty::Offset) : 0;
+}
+
+EClassCastFlags UEFFieldClass::GetCastFlags() const {
+
+	return *reinterpret_cast<EClassCastFlags*>(Class + Offset::FFieldClass::CastFlags);
+}
+
+bool UEFFieldClass::IsType(EClassCastFlags Flags) const {
+
+	return (Flags != EClassCastFlags::None ? (GetCastFlags() & Flags) : true);
+}
+
+UEFField::operator bool() const {
+
+	return Field != nullptr && reinterpret_cast<void*>(Field + Offset::FField::Class) != nullptr;
+}
+
+bool UEFField::operator==(const UEFField& Other) const {
+
+	return Field == Other.Field;
+}
+
+bool UEFField::operator!=(const UEFField& Other) const {
+
+	return Field != Other.Field;
+}
+
+void* UEFField::GetAddress() {
+
+	return Field;
+}
+
+const void* UEFField::GetAddress() const {
+
+	return Field;
+}
+
+UEFField UEFField::GetNext() const {
+
+	return UEFField(*reinterpret_cast<void**>(Field + Offset::FField::Next));
+}
+
+UEFFieldClass UEFField::GetClass() const {
+
+	return UEFFieldClass(*reinterpret_cast<void**>(Field + Offset::FField::Class));
+}
+
+bool UEFField::IsA(EClassCastFlags Flags) const {
+
+	return (Flags != EClassCastFlags::None ? GetClass().IsType(Flags) : true);
+}
+
+FName UEFField::GetFName() const {
+
+	return FName(Field + Offset::FField::Name);
+}
+
+std::string UEFField::GetName() const {
+
+	return Field ? GetFName().ToString() : "None";
+}
+
+template<typename UEType> UEType UEFField::Cast() const {
+
+	return UEType(Field);
+}
+
 UEStruct UEStruct::GetSuper() const {
 
 	return UEStruct(*reinterpret_cast<void**>(Object + Offset::UStruct::SuperStruct));
@@ -143,6 +228,26 @@ UEStruct UEStruct::GetSuper() const {
 UEFField UEStruct::GetChildProperties() const {
 
 	return UEFField(*reinterpret_cast<void**>(Object + Offset::UStruct::ChildProperties));
+}
+
+UEFProperty UEStruct::FindMember(const std::string& MemberName, EClassCastFlags TypeFlags) const {
+
+	if (!Object) {
+		return nullptr;
+	}
+
+	if (Offset::Setting::IsUseFProperty) {
+
+		for (UEFField Field = GetChildProperties(); Field; Field = Field.GetNext()) {
+
+			if (Field.IsA(TypeFlags) && Field.GetName() == MemberName) {
+
+				return Field.Cast<UEFProperty>();
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 EClassCastFlags UEClass::GetCastFlags() const {

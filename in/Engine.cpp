@@ -3,10 +3,6 @@
 
 namespace Engine {
 
-	void FindOffset() {
-
-	}
-
 	bool FindFunction() {
 
 		UECanvas::K2_DrawBox_Function = ObjectArray::FindObjectFast("K2_DrawBox").GetAddress();
@@ -160,11 +156,6 @@ namespace Engine {
 			return false;
 		}
 
-		SGGameViewportClient = ObjectArray::FindObjectFast<UEGameViewportClient>("SGGameViewportClient_2147482420");
-		if (!SGGameViewportClient.GetAddress()) {
-			return false;
-		}
-
 		Default__GameplayStatics = ObjectArray::FindObjectFast<UEGameplayStatics>("Default__GameplayStatics");
 		if (!Default__GameplayStatics.GetAddress()) {
 			return false;
@@ -190,13 +181,97 @@ namespace Engine {
 			return false;
 		}
 
-		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", UAGameEngine.GetValue(), SGGameViewportClient.GetValue(), SGCharacter.GetValue());
+		EngineWorld = ObjectArray::FindObjectFastInOuter<UEClass>("World", "Engine");
+		if (!EngineWorld.GetAddress()) {
+			return false;
+		}
+
+		EngineGameStateBase = ObjectArray::FindObjectFastInOuter<UEClass>("GameStateBase", "Engine");
+		if (!EngineGameStateBase.GetAddress()) {
+			return false;
+		}
+
+		EngineGameInstance = ObjectArray::FindObjectFastInOuter<UEClass>("GameInstance", "Engine");
+		if (!EngineGameInstance.GetAddress()) {
+			return false;
+		}
+
+		EngineLocalPlayer = ObjectArray::FindObjectFastInOuter<UEClass>("LocalPlayer", "Engine");
+		if (!EngineLocalPlayer.GetAddress()) {
+			return false;
+		}
+
+		EnginePlayerController = ObjectArray::FindObjectFastInOuter<UEClass>("PlayerController", "Engine");
+		if (!EnginePlayerController.GetAddress()) {
+			return false;
+		}
+
+		EnginePlayerCameraManager = ObjectArray::FindObjectFastInOuter<UEClass>("PlayerCameraManager", "Engine");
+		if (!EnginePlayerCameraManager.GetAddress()) {
+			return false;
+		}
+
+		EnginePawn = ObjectArray::FindObjectFastInOuter<UEClass>("Pawn", "Engine");
+		if (!EnginePawn.GetAddress()) {
+			return false;
+		}
+
+		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", UAGameEngine.GetValue(),  SGCharacter.GetValue());
 
 		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", Default__GameplayStatics.GetValue(), Default__SGActorStatics.GetValue(), Default__SGCharacterStatics.GetValue());
 
-		Print("--> UAGame.exe FindObject 0x%llX \n", Default__SGTeamStatics.GetValue());
+		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", Default__SGTeamStatics.GetValue(), EngineGameStateBase.GetValue(), EngineGameInstance.GetValue());
+
+		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", EngineLocalPlayer.GetValue(), EngineWorld.GetValue(), EnginePlayerController.GetValue());
+
+		Print("--> UAGame.exe FindObject 0x%llX 0x%llX \n", EnginePlayerCameraManager.GetValue(), EnginePawn.GetValue());
 
 		return true;
+	}
+
+	void FindOffset() {
+
+		Offset::UEngine::GameViewport = ObjectArray::FindObjectFastInOuter<UEClass>("Engine", "Engine").FindMember("GameViewport").GetOffset();
+		Print("--> UAGame.exe FindOffset UEngine::GameViewport 0x%lX \n", Offset::UEngine::GameViewport);
+
+		Offset::UGameViewportClient::World = ObjectArray::FindObjectFastInOuter<UEClass>("GameViewportClient", "Engine").FindMember("World").GetOffset();
+		Print("--> UAGame.exe FindOffset UGameViewportClient::World 0x%lX \n", Offset::UGameViewportClient::World);
+
+		Offset::UWorld::PersistentLevel = EngineWorld.FindMember("PersistentLevel").GetOffset();
+		Print("--> UAGame.exe FindOffset UWorld::PersistentLevel 0x%lX \n", Offset::UWorld::PersistentLevel);
+
+		Offset::UWorld::GameState = EngineWorld.FindMember("GameState").GetOffset();
+		Print("--> UAGame.exe FindOffset UWorld::GameState 0x%lX \n", Offset::UWorld::GameState);
+
+		Offset::UWorld::OwningGameInstance = EngineWorld.FindMember("OwningGameInstance").GetOffset();
+		Print("--> UAGame.exe FindOffset UWorld::OwningGameInstance 0x%lX \n", Offset::UWorld::OwningGameInstance);
+
+		Offset::AGameStateBase::PlayerArray = EngineGameStateBase.FindMember("PlayerArray").GetOffset();
+		Print("--> UAGame.exe FindOffset AGameStateBase::PlayerArray 0x%lX \n", Offset::AGameStateBase::PlayerArray);
+
+		Offset::UGameInstance::LocalPlayers = EngineGameInstance.FindMember("LocalPlayers").GetOffset();
+		Print("--> UAGame.exe FindOffset UGameInstance::LocalPlayers 0x%lX \n", Offset::UGameInstance::LocalPlayers);
+
+		Offset::ULocalPlayer::PlayerController = ObjectArray::FindObjectFastInOuter<UEClass>("Player", "Engine").FindMember("PlayerController").GetOffset();
+		Print("--> UAGame.exe FindOffset ULocalPlayer::PlayerController 0x%lX \n", Offset::ULocalPlayer::PlayerController);
+
+		Offset::ULocalPlayer::ViewportClient = EngineLocalPlayer.FindMember("ViewportClient").GetOffset();
+		Print("--> UAGame.exe FindOffset ULocalPlayer::ViewportClient 0x%lX \n", Offset::ULocalPlayer::ViewportClient);
+
+		Offset::APlayerController::Pawn = ObjectArray::FindObjectFastInOuter<UEClass>("Controller", "Engine").FindMember("Pawn").GetOffset();
+		Print("--> UAGame.exe FindOffset APlayerController::Pawn 0x%lX \n", Offset::APlayerController::Pawn);
+
+		Offset::APlayerController::PlayerCameraManager = ObjectArray::FindObjectFastInOuter<UEClass>("PlayerController", "Engine").FindMember("PlayerCameraManager").GetOffset();
+		Print("--> UAGame.exe FindOffset APlayerController::PlayerCameraManager 0x%lX \n", Offset::APlayerController::PlayerCameraManager);
+
+		Offset::APlayerCameraManager::CameraCachePrivate = ObjectArray::FindObjectFastInOuter<UEClass>("PlayerCameraManager", "Engine").FindMember("CameraCachePrivate").GetOffset();
+		Print("--> UAGame.exe FindOffset APlayerCameraManager::CameraCachePrivate 0x%lX \n", Offset::APlayerCameraManager::CameraCachePrivate);
+
+		Offset::APawn::PlayerState = ObjectArray::FindObjectFastInOuter<UEClass>("Pawn", "Engine").FindMember("PlayerState").GetOffset();
+		Print("--> UAGame.exe FindOffset APawn::PlayerState 0x%lX \n", Offset::APawn::PlayerState);
+
+		Offset::APawn::Controller = ObjectArray::FindObjectFastInOuter<UEClass>("Pawn", "Engine").FindMember("Controller").GetOffset();
+		Print("--> UAGame.exe FindOffset APawn::Controller 0x%lX \n", Offset::APawn::Controller);
 	}
 
 	bool FindFont() {
@@ -226,15 +301,13 @@ namespace Engine {
 		ScreenCenter.X = Width * 0.5f;
 		ScreenCenter.Y = Height * 0.5f;
 
-		FindOffset();
-
 		FindObject();
+
+		FindOffset();
 
 		FindFunction();
 
 		FindFont();
-
-		FindOffset();
 
 		return true;
 	}
