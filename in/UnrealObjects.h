@@ -300,7 +300,7 @@ public:
 	FTransform GetSocketTransform(uint64 InSocketName, ERelativeTransformSpace TransformSpace) const;
 };
 
-class UECanvas :UEObject {
+class UECanvas : public UEObject {
 
 	using UEObject::UEObject;
 

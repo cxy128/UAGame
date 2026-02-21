@@ -9,7 +9,7 @@
 #include <vector>
 #include "Common.h"
 
-#define OUTPUT_DEBUG FALSE
+#define OUTPUT_DEBUG TRUE
 
 inline auto Print = []<typename ...E>(const char* Format, E ...Arguments) -> void {
 

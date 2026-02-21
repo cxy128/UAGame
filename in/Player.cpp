@@ -1,4 +1,4 @@
-#include "Player.h"
+Ôªø#include "Player.h"
 
 namespace Player {
 
@@ -137,110 +137,6 @@ namespace Player {
 		return SocketIndexItem;
 	}
 
-	void Render::DrawDistance() {
-
-		//auto PlayerController = *reinterpret_cast<uint64*>(Pawn + Offset::APawn::Controller);
-		//if (!PlayerController) {
-		//	return;
-		//}
-
-		//auto PlayerCameraManager = *reinterpret_cast<uint64*>(PlayerController + Offset::APlayerController::PlayerCameraManager);
-		//if (!PlayerCameraManager) {
-		//	return;
-		//}
-
-		//auto RootComponent = *reinterpret_cast<uint64*>(Actor + Offset::AActor::RootComponent);
-		//if (!RootComponent) {
-		//	return;
-		//}
-
-		//auto POV = reinterpret_cast<FMinimalViewInfo*>(PlayerCameraManager + Offset::FCameraCacheEntry::POV);
-
-		//auto ActorRelativeLocation = *reinterpret_cast<FVector*>(RootComponent + Offset::USceneComponent::RelativeLocation);
-
-		//float Distance = POV->Location.Distance(ActorRelativeLocation);
-
-		auto SocketIndexItem = GetSocketIndex(SocketNum);
-		if (!SocketIndexItem.SocketNum) {
-			return;
-		}
-
-		auto HeadIndex = SocketIndexItem.data[Head];
-		if (!WorldToScreen[HeadIndex]) {
-			return;
-		}
-
-		auto PlayerController = *reinterpret_cast<uint64*>(Pawn + Offset::APawn::Controller);
-		if (!PlayerController) {
-			return;
-		}
-
-		auto PlayerCameraManager = *reinterpret_cast<uint64*>(PlayerController + Offset::APlayerController::PlayerCameraManager);
-		if (!PlayerCameraManager) {
-			return;
-		}
-
-		FVector CameraPos = APlayerCameraManager(PlayerCameraManager).GetCameraLocation();
-		if (isnan(CameraPos.X) || isnan(CameraPos.Y)) {
-			return;
-		}
-
-		FVector HeadTranslation = SocketTranslation[HeadIndex];
-		if (isnan(HeadTranslation.X) || isnan(HeadTranslation.Y)) {
-			return;
-		}
-
-		float Distance = CameraPos.Distance(HeadTranslation) / 100.0f;
-		if (isnan(Distance)) {
-			return;
-		}
-
-		FVector2D TextPos = SocketScreen[HeadIndex];
-		TextPos.X -= 15.f;
-		TextPos.Y -= 30.f;
-
-		FLinearColor Color;
-
-		if (Distance < 50.0f) {
-
-			Color = FLinearColor(1.0f, 0.2f, 0.2f, 1.0f);
-
-		} else if (Distance < 150.0f) {
-
-			Color = FLinearColor(1.0f, 0.9f, 0.2f, 1.0f);
-
-		} else {
-
-			Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		}
-
-		K2_StrokeText(FString(std::format(L"{:.0f}m", Distance).data()), Color, TextPos);
-	}
-
-	void Render::DrawName(const FLinearColor& Color) {
-
-		auto SocketIndexItem = GetSocketIndex(SocketNum);
-		if (!SocketIndexItem.SocketNum) {
-			return;
-		}
-
-		auto HeadIndex = SocketIndexItem.data[Head];
-		if (!WorldToScreen[HeadIndex]) {
-			return;
-		}
-
-		auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
-		if (!PlayerState) {
-			return;
-		}
-
-		FVector2D TextPos = SocketScreen[HeadIndex];
-		TextPos.X -= 15.f;
-		TextPos.Y -= 30.f + 30.0f;
-
-		K2_StrokeText(APlayerState(PlayerState).GetPlayerName(), Color, TextPos);
-	}
-
 	void Render::DrawAura() {
 
 		auto PlayerController = APawn(Pawn).GetController();
@@ -319,7 +215,7 @@ namespace Player {
 		}
 	}
 
-	void Render::DrawTeamId() {
+	void Render::DrawDistance() {
 
 		auto SocketIndexItem = GetSocketIndex(SocketNum);
 		if (!SocketIndexItem.SocketNum) {
@@ -331,18 +227,78 @@ namespace Player {
 			return;
 		}
 
-		auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
-		if (!PlayerState) {
+		auto PlayerController = *reinterpret_cast<uint64*>(Pawn + Offset::APawn::Controller);
+		if (!PlayerController) {
 			return;
 		}
 
-		auto TeamIndex = Default__SGTeamStatics.GetTeamIndex(PlayerState);
+		auto PlayerCameraManager = *reinterpret_cast<uint64*>(PlayerController + Offset::APlayerController::PlayerCameraManager);
+		if (!PlayerCameraManager) {
+			return;
+		}
+
+		FVector CameraPos = APlayerCameraManager(PlayerCameraManager).GetCameraLocation();
+		if (isnan(CameraPos.X) || isnan(CameraPos.Y)) {
+			return;
+		}
+
+		FVector HeadTranslation = SocketTranslation[HeadIndex];
+		if (isnan(HeadTranslation.X) || isnan(HeadTranslation.Y)) {
+			return;
+		}
+
+		float Distance = CameraPos.Distance(HeadTranslation) / 100.0f;
+		if (isnan(Distance)) {
+			return;
+		}
 
 		FVector2D TextPos = SocketScreen[HeadIndex];
-		TextPos.X -= 13.f;
-		TextPos.Y -= 30.f + 30.0f + 30.0f;
+		TextPos.X -= 15.f;
+		TextPos.Y -= 30.f;
 
-		K2_StrokeText(FString(std::format(L"∂”ŒÈ: {}", TeamIndex).data()), FLinearColor(0.0f, 1.0f, 0.0f, 1.0f), TextPos);
+		FLinearColor Color;
+
+		if (Distance < 50.0f) {
+
+			Color = FLinearColor(1.0f, 0.2f, 0.2f, 1.0f);
+
+		} else if (Distance < 150.0f) {
+
+			Color = FLinearColor(1.0f, 0.9f, 0.2f, 1.0f);
+
+		} else {
+
+			Color = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+
+		K2_StrokeText(FString(std::format(L"{:.0f}m", Distance).data()), Color, TextPos);
+	}
+
+	void Render::DrawName(const FLinearColor& Color) {
+
+		//auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
+		//if (!PlayerState) {
+		//	return;
+		//}
+
+		//auto PlayerName = APlayerState(PlayerState).GetPlayerName();
+	}
+
+	void Render::DrawTeamId() {
+
+		//auto PlayerState = Default__SGCharacterStatics.GetPlayerState(Actor);
+		//if (!PlayerState) {
+		//	return;
+		//}
+
+		//auto TeamIndex = Default__SGTeamStatics.GetTeamIndex(PlayerState);
+	}
+
+	void Render::DrawHealth() {
+
+		//auto Health = Default__SGActorStatics.GetHealth(Actor);
+
+		//auto HealthMax = Default__SGActorStatics.GetHealthMax(Actor);
 	}
 
 	void Start() {
@@ -425,9 +381,9 @@ namespace Player {
 				PlayerRender.DrawSocket(Color);
 			}
 
-			if (IsShowName) {
+			if (IsShowAura) {
 
-				PlayerRender.DrawName(Color);
+				PlayerRender.DrawAura();
 			}
 
 			if (IsShowDist) {
@@ -435,14 +391,19 @@ namespace Player {
 				PlayerRender.DrawDistance();
 			}
 
-			if (IsShowAura) {
+			if (IsShowName) {
 
-				PlayerRender.DrawAura();
+				PlayerRender.DrawName(Color);
 			}
 
 			if (IsShowTeam) {
 
 				PlayerRender.DrawTeamId();
+			}
+
+			if (IsShowHealth) {
+
+				PlayerRender.DrawHealth();
 			}
 		}
 	}

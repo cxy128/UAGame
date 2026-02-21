@@ -1,4 +1,4 @@
-#include "Draw.h"
+﻿#include "Draw.h"
 #include "Player.h"
 #include "Engine.h"
 
@@ -28,6 +28,10 @@ void Render() {
 		IsShowTeam = !IsShowTeam;
 	}
 
+	if (GetAsyncKeyState(VK_F6) & 1) {
+		IsShowHealth = !IsShowHealth;
+	}
+
 	if (IsDrawWindow) {
 
 		float StartX = 200.0f;
@@ -50,6 +54,10 @@ void Render() {
 		StartY += LineHeight;
 
 		Engine::K2_StrokeText(FString(std::format(L"[F5] 显示队伍: {}", IsShowTeam ? L"ON" : L"OFF").data()), IsShowTeam ? OnColor : OffColor, FVector2D(StartX, StartY), 1.5f);
+
+		StartY += LineHeight;
+
+		Engine::K2_StrokeText(FString(std::format(L"[F6] 显示血量: {}", IsShowHealth ? L"ON" : L"OFF").data()), IsShowHealth ? OnColor : OffColor, FVector2D(StartX, StartY), 1.5f);
 	}
 
 	Player::Start();

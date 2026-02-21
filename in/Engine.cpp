@@ -216,7 +216,12 @@ namespace Engine {
 			return false;
 		}
 
-		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", UAGameEngine.GetValue(),  SGCharacter.GetValue());
+		DebugCanvasObject = ObjectArray::FindObjectFastInOuter<UECanvas>("DebugCanvasObject", "Transient");
+		if (!DebugCanvasObject.GetAddress()) {
+			return false;
+		}
+
+		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", UAGameEngine.GetValue(),  SGCharacter.GetValue(), DebugCanvasObject.GetValue());
 
 		Print("--> UAGame.exe FindObject 0x%llX 0x%llX 0x%llX \n", Default__GameplayStatics.GetValue(), Default__SGActorStatics.GetValue(), Default__SGCharacterStatics.GetValue());
 
@@ -314,7 +319,7 @@ namespace Engine {
 
 	void K2_StrokeLine(const FVector2D& P1, const FVector2D& P2, const FLinearColor& Color, float LineThickness) {
 
-		Canvas.K2_DrawLine(P1, P2, LineThickness, Color);
+		DebugCanvasObject.K2_DrawLine(P1, P2, LineThickness, Color);
 	}
 
 	void K2_StrokeText(const FString& RenderText, const FLinearColor& Color, const FVector2D& Pos, float ScaleValue, bool bCenter, bool bOutline) {
@@ -325,11 +330,11 @@ namespace Engine {
 		FLinearColor ShadowColor(0.0f, 0.0f, 0.0f, 1.0f);
 		FLinearColor OutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		Canvas.K2_DrawText(UEFont::DefaultRegularFont, RenderText, Pos, Scale, Color, 1.0f, ShadowColor, ShadowOffset, bCenter, bCenter, bOutline, OutlineColor);
+		DebugCanvasObject.K2_DrawText(UEFont::DefaultRegularFont, RenderText, Pos, Scale, Color, 1.0f, ShadowColor, ShadowOffset, bCenter, bCenter, bOutline, OutlineColor);
 	}
 
 	void K2_DrawBox(const FVector2D& ScreenPosition, const FVector2D& ScreenSize, const FLinearColor& RenderColor, float Thickness) {
 
-		Canvas.K2_DrawBox(ScreenPosition, ScreenSize, Thickness, RenderColor);
+		DebugCanvasObject.K2_DrawBox(ScreenPosition, ScreenSize, Thickness, RenderColor);
 	}
 }

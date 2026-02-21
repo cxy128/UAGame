@@ -31,7 +31,7 @@ namespace Engine {
 	inline UEClass EnginePlayerCameraManager;
 	inline UEClass EnginePawn;
 
-	inline UECanvas Canvas;
+	inline UECanvas DebugCanvasObject;
 
 	bool Init();
 

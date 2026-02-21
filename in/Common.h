@@ -16,6 +16,8 @@ inline bool IsShowAura = true;
 
 inline bool IsShowTeam = false;
 
+inline bool IsShowHealth = false;
+
 typedef unsigned __int8 uint8;
 typedef unsigned __int16 uint16;
 typedef unsigned __int32 uint32;

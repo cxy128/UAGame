@@ -66,7 +66,7 @@ namespace UAGame {
 
 			//PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[113], fPostRender));
 
-			PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[113], JmpAddress));
+			PostRender = reinterpret_cast<void (*)(void* GameViewport, void* Canvas)>(_InterlockedExchangePointer(&_t->vft[114], JmpAddress));
 
 			//Draw = reinterpret_cast<void (*)(void* GameViewport, void* InViewport, void* SceneCanvas)>(_InterlockedExchangePointer(&_t->vft[], fDraw));
 
@@ -80,8 +80,6 @@ namespace UAGame {
 
 	void fDraw(void* GameViewport, void* InViewport, void* SceneCanvas) {
 
-		Engine::Canvas = UECanvas(Canvas);
-
 		Render();
 
 		Draw(GameViewport, InViewport, SceneCanvas);
@@ -89,12 +87,7 @@ namespace UAGame {
 
 	void fPostRender(void* GameViewport, void* Canvas) {
 
-		if (Canvas) {
-
-			Engine::Canvas = UECanvas(Canvas);
-
-			Render();
-		}
+		Render();
 
 		PostRender(GameViewport, Canvas);
 	}

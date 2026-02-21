@@ -105,6 +105,8 @@ namespace Player {
 		void DrawAura();
 
 		void DrawTeamId();
+
+		void DrawHealth();
 	};
 
 	inline std::vector<SocketIndex> SocketIndexList;
